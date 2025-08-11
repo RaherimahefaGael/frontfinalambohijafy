@@ -184,7 +184,7 @@
         const params = new URLSearchParams(window.location.search);
         const ref = params.get('ref');
 
-        fetch(`${ip}clients`)
+        fetch(`${ip}/clients`)
             .then(res => res.json())
             .then(clients => {
                 const client = clients.find(c => c.ref === ref);
