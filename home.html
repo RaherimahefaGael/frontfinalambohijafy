@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gestion Clients</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h3>Gestion des Clients</h3>
+        <div class="header-actions">
+            <button id="openModalBtn" class="btn">Ajouter un Client</button>
+
+            <div class="search-section">
+                <input type="text" id="searchInput"
+                    placeholder="Rechercher par nom, référence, numéro de compteur ou adresse..." />
+                <button id="searchBtn" class="btn">Filtrer</button>
+            </div>
+            <button id="changePasswordBtn" class="btn change-password-btn">Modifier le mot de passe</button>
+            <button id="imprimerBtn" class="btn logout-btn">Imprimer</button>
+            <button id="logoutBtn" class="btn logout-btn">Se déconnecter</button>
+        </div>
+        <table id="clientTable">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Référence</th>
+                    <th>Numéro de Compteur</th>
+                    <th>Adresse</th>
+                    <th>Photo</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Les lignes seront ajoutées dynamiquement par JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modale ajout/modification client -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="closeModalBtn" class="close">&times;</span>
+            <h2 id="modalTitle">Ajouter un Client</h2>
+            <form id="clientForm">
+                <input type="hidden" id="clientId" name="id" />
+                <label for="nom">Nom :</label>
+                <input type="text" id="nom" name="nom" required />
+
+                <label for="ref">Référence :</label>
+                <input type="text" id="ref" name="ref" required />
+
+                <label for="no_compteur">Numéro de Compteur :</label>
+                <input type="text" id="no_compteur" name="no_compteur" required />
+
+                <label for="adresse">Adresse :</label>
+                <input type="text" id="adresse" name="adresse" required />
+
+                <label for="photo">Photo :</label>
+                <input type="file" id="photo" name="photo" accept="image/*" />
+
+                <button type="submit" class="btn" id="submitBtn">Ajouter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal image agrandie -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span id="closeImageModalBtn" class="close">&times;</span>
+            <img id="expandedImage" src="" alt="Image agrandie" style="width: 100%; border-radius: 10px;" />
+        </div>
+    </div>
+
+    <!-- Modal changement mot de passe -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <span id="closeChangePasswordModalBtn" class="close">&times;</span>
+            <h2>Modifier le mot de passe</h2>
+            <form id="changePasswordForm">
+                <label for="currentPassword">Mot de passe actuel :</label>
+                <input type="password" id="currentPassword" name="currentPassword" required />
+
+                <label for="newPassword">Nouveau mot de passe :</label>
+                <input type="password" id="newPassword" name="newPassword" required />
+
+                <label for="confirmNewPassword">Confirmer le nouveau mot de passe :</label>
+                <input type="password" id="confirmNewPassword" name="confirmNewPassword" required />
+
+                <button type="submit" class="btn">Modifier</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

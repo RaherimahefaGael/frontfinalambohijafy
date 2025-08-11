@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Envoyer message WS à client Flutter</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f9fafb;
+            --input-bg: #ffffff;
+            --border-color: #d1d5db;
+            --text-color: #111827;
+            --error-color: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: #fff;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            margin-bottom: 24px;
+            text-align: center;
+            color: var(--text-color);
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #back-btn {
+            background-color: #6b7280;
+        }
+
+        #back-btn:hover {
+            background-color: #4b5563;
+        }
+
+        #error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>POSTPAYÉ</h1>
+
+        <label for="select-client">Choisir client :</label>
+        <select id="select-client">
+            <option value="">-- Sélectionnez un client --</option>
+        </select>
+
+        <label for="ncompteur">Numéro compteur :</label>
+        <input type="text" id="ncompteur" placeholder="Ex: 123456789" />
+
+        <label for="titulaire">Titulaire :</label>
+        <input type="text" id="titulaire" placeholder="Ex: Jean Dupont" />
+
+        <label for="refFacture">Référence facture :</label>
+        <input type="text" id="refFacture" placeholder="Ex: FAC-2023-001" />
+
+        <label for="mois">Mois :</label>
+        <input type="text" id="mois" placeholder="Ex: Juillet 2025" />
+
+        <label for="montant">Montant :</label>
+        <input type="text" id="montant" placeholder="Ex: 15000" />
+
+        <label for="date">Date :</label>
+        <input type="text" id="date" placeholder="Ex: 24/07/2025" />
+
+        <label for="no">Numéro :</label>
+        <input type="text" id="no" placeholder="Ex: 001" />
+
+        <label for="Reference">Référence :</label>
+        <input type="text" id="Reference" placeholder="Ex: POST-XYZ-45" />
+
+        <button onclick="sendMessage()">Envoyer</button>
+        <p id="error-message">Veuillez remplir tous les champs et choisir un client.</p>
+        <button id="back-btn" onclick="window.location.href='prepaye.html'">Prépayé</button>
+    </div>
+
+    <script>
+        const clientId = 'web_pospayé';
+        var ipws = "ws://localhost:4545";
+        const ws = new WebSocket(ipws);
+
+        ws.onopen = () => {
+            console.log('Connexion au serveur WebSocket établie.');
+            ws.send(JSON.stringify({ type: 'register', clientId: clientId }));
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'clientList' && Array.isArray(data.clients)) {
+                    updateClientDropdown(data.clients);
+                }
+            } catch (e) {
+                console.error('Erreur parsing message WS:', e);
+            }
+        };
+
+        function updateClientDropdown(clients) {
+            const select = document.getElementById('select-client');
+            const currentSelection = select.value;
+            select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
+            clients.forEach(client => {
+                if (client === clientId) return;
+                const option = document.createElement('option');
+                option.value = client;
+                option.textContent = client;
+                select.appendChild(option);
+            });
+            if ([...select.options].some(opt => opt.value === currentSelection)) {
+                select.value = currentSelection;
+            }
+        }
+
+        function sendMessage() {
+            const target = document.getElementById('select-client').value;
+            const ncompteur = document.getElementById('ncompteur').value.trim();
+            const titulaire = document.getElementById('titulaire').value.trim();
+            const refFacture = document.getElementById('refFacture').value.trim();
+            const mois = document.getElementById('mois').value.trim();
+            const montant = document.getElementById('montant').value.trim();
+            const date = document.getElementById('date').value.trim();
+            const no = document.getElementById('no').value.trim();
+            const Reference = document.getElementById('Reference').value.trim();
+            const errorMessage = document.getElementById('error-message');
+
+            if (!target || !ncompteur || !titulaire || !refFacture || !mois || !montant || !date || !no || !Reference) {
+                errorMessage.style.display = 'block';
+                return;
+            } else {
+                errorMessage.style.display = 'none';
+            }
+
+            const messageData = {
+                type: "message",
+                target: target,
+                from: "web-client",
+                message: {
+                    type: "postpaye",
+                    ncompteur,
+                    titulaire,
+                    refFacture,
+                    mois,
+                    montant,
+                    date,
+                    no,
+                    Reference
+                }
+            };
+
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(messageData));
+                alert(`Message envoyé à ${target}`);
+                document.querySelectorAll('input').forEach(i => i.value = '');
+            } else {
+                alert('WebSocket non connecté');
+            }
+        }
+    </script>
+</body>
+
+</html>

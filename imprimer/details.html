@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Détails Client</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --gray-color: #6b7280;
+            --bg-color: #f9fafb;
+            --text-color: #111827;
+            --error-color: #ef4444;
+            --border-color: #d1d5db;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #fff;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        input:disabled {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            color: white;
+        }
+
+        #print-btn {
+            background-color: var(--primary-color);
+        }
+
+        #print-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #back-btn {
+            background-color: var(--gray-color);
+        }
+
+        #back-btn:hover {
+            background-color: #4b5563;
+        }
+
+        #error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        #client-details {
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Détails du client (prépayé)</h1>
+
+        <div id="client-details">Chargement...</div>
+
+        <label for="select-client">Choisir client Flutter à envoyer :</label>
+        <select id="select-client">
+            <option value="">-- Sélectionnez un client --</option>
+        </select>
+
+        <label for="montant">Montant :</label>
+        <input type="text" id="montant" placeholder="Montant" />
+
+        <label for="total">Total (Kwh) :</label>
+        <input type="text" id="total" placeholder="Total (Kwh)" />
+
+        <label for="date">Date :</label>
+        <input type="text" id="date" placeholder="Date" />
+
+        <label for="code">Code :</label>
+        <input type="text" id="code" placeholder="Code" />
+
+        <p id="error-message">Veuillez remplir tous les champs et sélectionner un client.</p>
+
+        <button id="print-btn" onclick="send()">Imprimer</button>
+        <button id="back-btn" onclick="window.location.href='prepaye.html'">Retour</button>
+    </div>
+
+    <script>
+        const clientId = 'web_prepayé';
+        var ipws = "ws://148.230.125.64:4545";
+        var ip = "http://148.230.125.64:4545";
+        const ws = new WebSocket(ipws);
+
+        ws.onopen = () => {
+            console.log('Connexion au serveur WebSocket établie.');
+            ws.send(JSON.stringify({ type: 'register', clientId: clientId }));
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'clientList' && Array.isArray(data.clients)) {
+                    updateClientDropdown(data.clients);
+                }
+            } catch (e) {
+                console.error('Erreur parsing message WS:', e);
+            }
+        };
+
+        function updateClientDropdown(clients) {
+            const select = document.getElementById('select-client');
+            const currentSelection = select.value;
+            select.innerHTML = '<option value="">-- Sélectionnez un client --</option>';
+            clients.forEach(client => {
+                if (client === clientId) return;
+                const option = document.createElement('option');
+                option.value = client;
+                option.textContent = client;
+                select.appendChild(option);
+            });
+            if ([...select.options].some(opt => opt.value === currentSelection)) {
+                select.value = currentSelection;
+            }
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref');
+
+        fetch(`${ip}clients`)
+            .then(res => res.json())
+            .then(clients => {
+                const client = clients.find(c => c.ref === ref);
+                if (client) {
+                    document.getElementById('client-details').innerHTML = `
+            <label><strong>Nom :</strong></label>
+            <input type="text" id="client-nom" value="${client.nom}" disabled />
+            <label><strong>Référence :</strong></label>
+            <input type="text" id="client-ref" value="${client.ref}" disabled />
+            <label><strong>Numéro de Compteur :</strong></label>
+            <input type="text" id="client-no-compteur" value="${client.no_compteur}" disabled />
+            <label><strong>Adresse :</strong></label>
+            <input type="text" id="client-adresse" value="${client.adresse}" disabled />
+          `;
+                } else {
+                    document.getElementById('client-details').innerText = "Client introuvable.";
+                }
+            });
+
+        function send() {
+            const ncompteur = document.getElementById('client-no-compteur')?.value || '';
+            const titulaire = document.getElementById('client-nom')?.value || '';
+            const ref = document.getElementById('client-ref')?.value || '';
+            const montant = document.getElementById('montant').value.trim();
+            const total = document.getElementById('total').value.trim();
+            const date = document.getElementById('date').value.trim();
+            const code = document.getElementById('code').value.trim();
+            const targetClient = document.getElementById('select-client').value;
+
+            if (!ncompteur || !titulaire || !ref || !montant || !date || !total || !code || !targetClient) {
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('error-message').style.display = 'none';
+            }
+
+            const message = {
+                type: "message",
+                from: clientId,
+                target: targetClient,
+                message: {
+                    type: "prepaye",
+                    ncompteur,
+                    titulaire,
+                    refFacture: ref,
+                    montant,
+                    date,
+                    total,
+                    code
+                }
+            };
+
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                ['montant', 'total', 'date', 'code'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

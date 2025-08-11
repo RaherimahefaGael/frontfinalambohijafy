@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Clients</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .filters input {
+            padding: 10px 14px;
+            width: 250px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: border 0.3s ease;
+        }
+
+        .filters input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        ul#clients-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .client-card {
+            background-color: #fafafa;
+            border-left: 5px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .client-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .client-card div {
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .client-card strong {
+            color: #555;
+        }
+
+        .client-card button {
+            margin-top: 10px;
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .client-card button:hover {
+            background-color: #0056b3;
+        }
+
+        #print-btn {
+            display: block;
+            margin: 0 auto 30px auto;
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #print-btn:hover {
+            background-color: #218838;
+        }
+
+        @media (max-width: 600px) {
+            .filters input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button id="print-btn" onclick="goToIndex()">Aller vers POST PAYE</button>
+        <h1>PREPAYE</h1>
+
+        <div class="filters">
+            <input type="text" id="nom-filter" placeholder="Filtrer par nom" onkeyup="filterClients()">
+            <input type="text" id="ref-filter" placeholder="Filtrer par référence" onkeyup="filterClients()">
+        </div>
+
+        <ul id="clients-list"></ul>
+    </div>
+
+    <script>
+        let allClients = [];
+        var ip = "http://148.230.125.64:4545";
+        function getClients() {
+            fetch(ip + '/clients')
+                .then(response => response.json())
+                .then(data => {
+                    allClients = data;
+                    displayClients(data);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des clients:', error);
+                });
+        }
+
+        function displayClients(clients) {
+            const clientsList = document.getElementById('clients-list');
+            clientsList.innerHTML = '';
+
+            clients.forEach(client => {
+                const listItem = document.createElement('li');
+                listItem.className = 'client-card';
+                listItem.innerHTML = `
+          <div><strong>Nom :</strong> ${client.nom}</div>
+          <div><strong>Référence :</strong> ${client.ref}</div>
+          <div><strong>Numéro de Compteur :</strong> ${client.no_compteur}</div>
+          <div><strong>Adresse :</strong> ${client.adresse}</div>
+          <button onclick="goToDetails('${client.ref}')">Détails</button>
+        `;
+                clientsList.appendChild(listItem);
+            });
+        }
+
+        function filterClients() {
+            const nomFilter = document.getElementById('nom-filter').value.toLowerCase();
+            const refFilter = document.getElementById('ref-filter').value.toLowerCase();
+
+            const filteredClients = allClients.filter(client =>
+                client.nom.toLowerCase().includes(nomFilter) &&
+                client.ref.toLowerCase().includes(refFilter)
+            );
+
+            displayClients(filteredClients);
+        }
+
+        function goToDetails(ref) {
+            window.location.href = `details.html?ref=${encodeURIComponent(ref)}`;
+        }
+
+        function goToIndex() {
+            window.location.href = `imprimer.html`;
+        }
+
+        window.onload = getClients;
+    </script>
+</body>
+
+</html>
